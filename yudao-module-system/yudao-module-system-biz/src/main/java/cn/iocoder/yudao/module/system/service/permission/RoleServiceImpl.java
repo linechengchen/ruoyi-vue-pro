@@ -10,8 +10,10 @@ import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
+import cn.iocoder.yudao.module.system.dal.dataobject.permission.AdminRoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.RoleMapper;
+import cn.iocoder.yudao.module.system.dal.mysql.permission.UserRoleMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.system.enums.permission.DataScopeEnum;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import jakarta.annotation.Resource;
+
 import java.util.*;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
@@ -48,6 +51,8 @@ public class RoleServiceImpl implements RoleService {
 
     @Resource
     private RoleMapper roleMapper;
+    @Resource
+    private UserRoleMapper userRoleMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -212,9 +217,17 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public PageResult<RoleDO> getRolePage(RolePageReqVO reqVO) {
+//        LoginUser loginUser = SecurityFrameworkUtils.getLoginUser();
+//        SecurityFrameworkServiceImpl securityFrameworkService = SpringUtil.getBean(SecurityFrameworkServiceImpl.class);
+//        if (securityFrameworkService.hasRole("super_admin")) {
+//            return roleMapper.selectAdminPage(reqVO);
+//        }
         return roleMapper.selectPage(reqVO);
     }
-
+    @Override
+    public PageResult<AdminRoleDO> getAdminRolePage(RolePageReqVO reqVO) {
+            return roleMapper.selectAdminPage(reqVO);
+    }
     @Override
     public boolean hasAnySuperAdmin(Collection<Long> ids) {
         if (CollectionUtil.isEmpty(ids)) {

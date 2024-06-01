@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.system.controller.admin.permission;
 
+import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -7,7 +8,11 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
+import cn.iocoder.yudao.framework.security.core.LoginUser;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkServiceImpl;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.*;
+import cn.iocoder.yudao.module.system.dal.dataobject.permission.AdminRoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,9 +77,18 @@ public class RoleController {
     @GetMapping("/page")
     @Operation(summary = "获得角色分页")
     @PreAuthorize("@ss.hasPermission('system:role:query')")
-    public CommonResult<PageResult<RoleRespVO>> getRolePage(RolePageReqVO pageReqVO) {
+    public CommonResult<PageResult<?>> getRolePage(RolePageReqVO pageReqVO) {
+        LoginUser loginUser = SecurityFrameworkUtils.getLoginUser();
+        SecurityFrameworkServiceImpl securityFrameworkService = SpringUtil.getBean(SecurityFrameworkServiceImpl.class);
+        if (securityFrameworkService.hasRole("super_admin")) {
+            PageResult<AdminRoleDO> pageResult = roleService.getAdminRolePage(pageReqVO);
+            System.out.println(pageResult);
+            return success(BeanUtils.toBean(pageResult, AdminRoleDO.class));
+//            return success(BeanUtils.toBean(pageResult, RoleRespVO.class));
+        }
         PageResult<RoleDO> pageResult = roleService.getRolePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, RoleRespVO.class));
+
     }
 
     @GetMapping({"/list-all-simple", "/simple-list"})

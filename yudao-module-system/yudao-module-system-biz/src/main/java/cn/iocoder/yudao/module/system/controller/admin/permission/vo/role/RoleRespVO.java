@@ -51,7 +51,10 @@ public class RoleRespVO {
 
     @Schema(description = "数据范围(指定部门数组)", example = "1")
     private Set<Long> dataScopeDeptIds;
-
+    @Schema(description = "租户编号", example = "1")
+    private Long tenantId;
+    @Schema(description = "租户名称", example = "速顺科技")
+    private String tenantName;
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
     private LocalDateTime createTime;
 

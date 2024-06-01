@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.permission;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
+import cn.iocoder.yudao.module.system.dal.dataobject.permission.AdminRoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 
 import jakarta.validation.Valid;
@@ -103,6 +104,13 @@ public interface RoleService {
      * @return 角色分页结果
      */
     PageResult<RoleDO> getRolePage(RolePageReqVO reqVO);
+    /**
+     * 获得管理员角色分页
+     *
+     * @param reqVO 角色分页查询
+     * @return 角色分页结果
+     */
+    PageResult<AdminRoleDO> getAdminRolePage(RolePageReqVO pageReqVO);
 
     /**
      * 判断角色编号数组中，是否有管理员

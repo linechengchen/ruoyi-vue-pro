@@ -62,6 +62,11 @@ public class RoleDO extends TenantBaseDO {
     private String remark;
 
     /**
+     * 租户编号
+     */
+    private Long tenantId;
+
+    /**
      * 数据范围
      *
      * 枚举 {@link DataScopeEnum}
