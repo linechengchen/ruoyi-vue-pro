@@ -12,6 +12,9 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.tenant.config.TenantProperties;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
+import cn.iocoder.yudao.module.system.api.sms.SmsCodeApi;
+import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeSendReqDTO;
+import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeValidateReqDTO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
@@ -23,6 +26,7 @@ import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantPackageDO;
 import cn.iocoder.yudao.module.system.dal.mysql.tenant.TenantMapper;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
 import cn.iocoder.yudao.module.system.enums.permission.RoleTypeEnum;
+import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
 import cn.iocoder.yudao.module.system.service.permission.MenuService;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
@@ -37,11 +41,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import jakarta.annotation.Resource;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 import static java.util.Collections.singleton;
 
@@ -61,6 +67,9 @@ public class TenantServiceImpl implements TenantService {
 
     @Resource
     private TenantMapper tenantMapper;
+
+    @Resource
+    private SmsCodeApi smsCodeApi;
 
     @Resource
     private TenantPackageService tenantPackageService;
@@ -117,6 +126,51 @@ public class TenantServiceImpl implements TenantService {
             tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
         });
         return tenant.getId();
+    }
+
+    @Override
+    @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
+    public Long registerTenant(TenantSaveReqVO registerReqVO) {
+        // 校验租户名称是否重复
+        validTenantNameDuplicate(registerReqVO.getName(), null);
+        // 校验租户域名是否重复
+//        validTenantWebsiteDuplicate(registerReqVO.getWebsite(), null);
+        // 校验套餐被禁用
+        TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(registerReqVO.getPackageId());
+        // 创建租户
+        TenantDO tenant = BeanUtils.toBean(registerReqVO, TenantDO.class);
+        SmsCodeValidateReqDTO reqDTO = new SmsCodeValidateReqDTO();
+
+
+        reqDTO.setMobile(registerReqVO.getContactMobile());
+        reqDTO.setScene(SmsSceneEnum.ADMIN_REGISTER.getScene());
+        reqDTO.setCode(registerReqVO.getCode());
+        smsCodeApi.validateSmsCode(reqDTO);
+
+
+        tenant.setCreator("");
+        tenantMapper.insert(tenant);
+        // 创建租户的管理员
+        TenantUtils.execute(tenant.getId(), () -> {
+            // 创建角色
+            Long roleId = createRole(tenantPackage);
+            // 创建用户，并分配角色
+            Long userId = createUser(roleId, registerReqVO);
+            // 修改租户的管理员
+            tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
+        });
+        return tenant.getId();
+
+
+    }
+    public int registerTenantSendCode(String mobile, String templateCode){
+        SmsCodeSendReqDTO smsCodeSendReqDTO=new SmsCodeSendReqDTO();
+        smsCodeSendReqDTO.setMobile(mobile);
+        smsCodeSendReqDTO.setScene(SmsSceneEnum.ADMIN_REGISTER.getScene());
+        smsCodeSendReqDTO.setCreateIp(getClientIP());
+
+        smsCodeApi.sendSmsCode(smsCodeSendReqDTO);
+        return 1;
     }
 
     private Long createUser(Long roleId, TenantSaveReqVO createReqVO) {
@@ -302,5 +356,6 @@ public class TenantServiceImpl implements TenantService {
     private boolean isTenantDisable() {
         return tenantProperties == null || Boolean.FALSE.equals(tenantProperties.getEnable());
     }
+
 
 }

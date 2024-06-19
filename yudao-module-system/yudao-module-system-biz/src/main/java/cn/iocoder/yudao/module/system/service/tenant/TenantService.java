@@ -26,6 +26,13 @@ public interface TenantService {
      * @return 编号
      */
     Long createTenant(@Valid TenantSaveReqVO createReqVO);
+    /**
+     * 注册租户
+     *
+     * @param registerReqVO 创建信息
+     * @return 编号
+     */
+    Long registerTenant(TenantSaveReqVO registerReqVO);
 
     /**
      * 更新租户
@@ -127,4 +134,12 @@ public interface TenantService {
      */
     void validTenant(Long id);
 
+
+    /**
+     * 注册租户发送验证码
+     *
+     * @param mobile 手机号
+     * @param templateCode 模板编号
+     */
+    int registerTenantSendCode(String mobile, String templateCode);
 }

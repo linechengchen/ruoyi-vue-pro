@@ -21,6 +21,7 @@ public interface SmsSendApi {
      */
     Long sendSingleSmsToAdmin(@Valid SmsSendSingleToUserReqDTO reqDTO);
 
+
     /**
      * 发送单条短信给 Member 用户
      *

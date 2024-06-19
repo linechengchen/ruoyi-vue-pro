@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
+import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplateSendReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantRespVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
@@ -61,6 +62,22 @@ public class TenantController {
         return success(tenantService.createTenant(createReqVO));
     }
 
+    @PostMapping("/register")
+    @PermitAll
+    @Operation(summary = "注册租户")
+    public CommonResult<Long> register(@Valid @RequestBody TenantSaveReqVO registerReqVO) {
+        // 判断是否需要验证码
+        return success(tenantService.registerTenant(registerReqVO));
+    }
+    @PostMapping("/register_send_code")
+    @PermitAll
+    @Operation(summary = "发送注册验证码")
+    public CommonResult register_send_code(@Valid @RequestBody SmsTemplateSendReqVO sendReqVO) {
+        // 判断是否需要验证码
+        return success(tenantService.registerTenantSendCode(sendReqVO.getMobile(),
+                sendReqVO.getTemplateCode()));
+    }
+
     @PutMapping("/update")
     @Operation(summary = "更新租户")
     @PreAuthorize("@ss.hasPermission('system:tenant:update')")
@@ -98,6 +115,7 @@ public class TenantController {
     @GetMapping("/export-excel")
     @Operation(summary = "导出租户 Excel")
     @PreAuthorize("@ss.hasPermission('system:tenant:export')")
+
     @ApiAccessLog(operateType = EXPORT)
     public void exportTenantExcel(@Valid TenantPageReqVO exportReqVO,
                                   HttpServletResponse response) throws IOException {

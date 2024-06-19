@@ -3,13 +3,11 @@ package cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant;
 import cn.hutool.core.util.ObjectUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.*;
 import lombok.Data;
+import org.checkerframework.checker.units.qual.min;
 import org.hibernate.validator.constraints.Length;
 
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - 租户创建/修改 Request VO")
@@ -60,11 +58,24 @@ public class TenantSaveReqVO {
     @Length(min = 4, max = 16, message = "密码长度为 4-16 位")
     private String password;
 
-    @AssertTrue(message = "用户账号、密码不能为空")
+
+
+    // ========== 仅【注册】时，需要传递的字段 ==========
+    @Schema(description = "是否注册标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @NotNull(message = "请发送验证码")
+    @Min(value = 1, message = "请发送验证码")
+    private Long isRegister;
+
+    @Schema(description = "验证码", example = "1235")
+    @Size(min = 4, max = 4, message = "验证码长度为 4 位")
+    private String code;
+
+
+    @AssertTrue(message = "用户账号、密码、验证码不能为空")
     @JsonIgnore
     public boolean isUsernameValid() {
         return id != null // 修改时，不需要传递
-                || (ObjectUtil.isAllNotEmpty(username, password)); // 新增时，必须都传递 username、password
+                || (ObjectUtil.isAllNotEmpty(username, password) // 新增时，必须都传递 username、password
+                && (isRegister != 0 || ObjectUtil.isAllNotEmpty(code))); // 注册时，还必须传递 code
     }
-
 }
